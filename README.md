@@ -1,5 +1,5 @@
 # vagrant-webconsole
-Vagrant setup for running a Docker container containing wetty (https://github.com/butlerx/wetty)
+Vagrant setup for running a Docker container containing wetty (https://hub.docker.com/repository/docker/roul76/wetty)
 
 Startup:
 ```
