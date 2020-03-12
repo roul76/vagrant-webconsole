@@ -4,9 +4,9 @@ WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
 
 _checkParams() {
-  if [ $# -ne 4 ]; then
+  if [ $# -ne 5 ]; then
     echo "FAILURE! Missing parameter">&2
-    echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password>">&2
+    echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password> <accessible networks>">&2
     exit 1
   fi
 }
@@ -105,6 +105,7 @@ _startSSHDContainer() {
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
     -e SSH_USER="$1" \
     -e SSH_HASH="${pwh}" \
+    -e SSH_ACCESSIBLE_NETWORKS="$3" \
     -dt \
     roul76/sshd:latest >/dev/null 2>&1
 
@@ -117,7 +118,7 @@ _main() {
   _changeHostname
   _installNecessaryPackages
   _secureSSHD
-  _startSSHDContainer "$3" "$4"
+  _startSSHDContainer "$3" "$4" "$5"
   _startWebconsoleContainer "$1" "$2"
   echo "--- FINISHED ---"
 }
