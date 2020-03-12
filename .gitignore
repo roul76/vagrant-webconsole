@@ -2,3 +2,6 @@
 /.idea/codeStyles/codeStyleConfig.xml
 /.idea/
 /.vagrant/
+/shared/webconsole-sshd.hostkey
+/shared/webconsole-sshd.hosts
+/shared/webconsole-sshd.sh

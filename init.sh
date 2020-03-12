@@ -1,10 +1,27 @@
 #!/bin/sh
 
+WEBCONSOLE_HOSTNAME="webconsole"
+WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
+
+_checkParams() {
+  if [ $# -ne 4 ]; then
+    echo "FAILURE! Missing parameter">&2
+    echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password>">&2
+    exit 1
+  fi
+}
+
 _changeHostname() {
-  echo "- Changing hostname to 'webconsole'"
-  echo "webconsole" > /etc/hostname
+  echo "- Changing hostname to '${WEBCONSOLE_HOSTNAME}'"
+  echo "${WEBCONSOLE_HOSTNAME}" > /etc/hostname
   hostname -F /etc/hostname
-  sed -i 's/alpine310/webconsole/g' /etc/hosts
+  sed -i 's/alpine310/'"${WEBCONSOLE_HOSTNAME}"'/g' /etc/hosts
+}
+
+_installNecessaryPackages() {
+  echo "- Install necessary packages"
+  apk add --no-cache jq \
+    >/dev/null
 }
 
 _secureSSHD() {
@@ -18,6 +35,10 @@ _secureSSHD() {
   ' /etc/ssh/sshd_config
 
   /etc/init.d/sshd restart >/dev/null
+}
+
+_retrieveBridgeSubnet() {
+  docker network inspect bridge | jq --raw-output -e '.[0].IPAM.Config[0].Subnet'
 }
 
 _waitContainerReady() {
@@ -44,30 +65,59 @@ _waitContainerReady() {
 
 _startWebconsoleContainer() {
   local pwh
+  local shell
 
   pwh=$(openssl passwd -1 "$2" 2>/dev/null)
+  shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
   echo "- Starting webconsole wetty-container"
+  echo "  user:  '$1'"
+  echo "  hash:  '${pwh}'"
+  echo "  shell: '${shell}'"
+  docker run \
+    --restart always \
+    --name "${WEBCONSOLE_HOSTNAME}" \
+    --network host \
+    --hostname "${WEBCONSOLE_HOSTNAME}" \
+    --mount type=bind,source=/vagrant/shared,target=/webconsole,readonly \
+    -e WEBCONSOLE_BRIDGE_SUBNET="$(_retrieveBridgeSubnet)" \
+    -e WEBCONSOLE_USER="$1" \
+    -e WEBCONSOLE_HASH="${pwh}" \
+    -e WEBCONSOLE_SHELL="${shell}" \
+    -dt \
+    roul76/wetty:latest >/dev/null 2>&1
+
+  _waitContainerReady "${WEBCONSOLE_HOSTNAME}"
+}
+
+_startSSHDContainer() {
+  local pwh
+
+  pwh=$(openssl passwd -1 "$2" 2>/dev/null)
+  echo "- Starting webconsole sshd-container"
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
   docker run \
     --restart always \
-    --name webconsole \
-    --network host \
-    --hostname webconsole \
-    --mount type=bind,source=/vagrant/bin,target=/webconsole,readonly \
-    -e WEBCONSOLE_USER="$1" \
-    -e WEBCONSOLE_HASH="${pwh}" \
-    -e WEBCONSOLE_SHELL="/webconsole/ssh.sh" \
+    --name "${WEBCONSOLE_SSHD_HOSTNAME}" \
+    --network bridge \
+    --hostname "${WEBCONSOLE_SSHD_HOSTNAME}" \
+    --mount type=bind,source=/vagrant/shared,target=/webconsole \
+    -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
+    -e SSH_USER="$1" \
+    -e SSH_HASH="${pwh}" \
     -dt \
-    roul76/wetty:latest >/dev/null 2>&1
+    roul76/sshd:latest >/dev/null 2>&1
 
-  _waitContainerReady "webconsole"
+  _waitContainerReady "${WEBCONSOLE_SSHD_HOSTNAME}"
 }
 
 _main() {
   echo "--- INITIALIZATION  ---"
+  _checkParams "$@"
   _changeHostname
+  _installNecessaryPackages
   _secureSSHD
+  _startSSHDContainer "$3" "$4"
   _startWebconsoleContainer "$1" "$2"
   echo "--- FINISHED ---"
 }
