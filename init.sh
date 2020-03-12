@@ -77,6 +77,7 @@ _startWebconsoleContainer() {
     --restart always \
     --name "${WEBCONSOLE_HOSTNAME}" \
     --network host \
+    --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_HOSTNAME}" \
     --mount type=bind,source=/vagrant/shared,target=/webconsole,readonly \
     -e WEBCONSOLE_BRIDGE_SUBNET="$(_retrieveBridgeSubnet)" \
@@ -100,6 +101,7 @@ _startSSHDContainer() {
     --restart always \
     --name "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --network bridge \
+    --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
