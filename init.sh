@@ -37,6 +37,19 @@ _secureSSHD() {
   /etc/init.d/sshd restart >/dev/null
 }
 
+_iptables() {
+  local netdevice
+  local netmask
+
+  echo "- Configuring iptables"
+  netdevice=$(route|awk '$1~/^default$/{print($8)}')
+  netmask=$(ip route|awk '$3~/^'"${netdevice}"'$/{print($1)}')
+  iptables -A INPUT -s "${netmask}" -j ACCEPT
+  iptables -A OUTPUT -d "${netmask}" -j ACCEPT
+  iptables -P INPUT DROP
+  iptables -P OUTPUT DROP
+}
+
 _retrieveBridgeSubnet() {
   docker network inspect bridge | jq --raw-output -e '.[0].IPAM.Config[0].Subnet'
 }
@@ -120,6 +133,7 @@ _main() {
   _changeHostname
   _installNecessaryPackages
   _secureSSHD
+  _iptables
   _startSSHDContainer "$3" "$4" "$5"
   _startWebconsoleContainer "$1" "$2"
   echo "--- FINISHED ---"
