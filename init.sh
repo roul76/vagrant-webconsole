@@ -133,9 +133,9 @@ _main() {
   _changeHostname
   _installNecessaryPackages
   _secureSSHD
-  _iptables
   _startSSHDContainer "$3" "$4" "$5"
   _startWebconsoleContainer "$1" "$2"
+  _iptables
   echo "--- FINISHED ---"
 }
 
