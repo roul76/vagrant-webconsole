@@ -4,6 +4,7 @@ WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
 
 _checkParams() {
+  echo "- Validate parameters"
   if [ $# -ne 5 ]; then
     echo "FAILURE! Missing parameter">&2
     echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password> <accessible networks>">&2
@@ -60,14 +61,14 @@ _waitContainerReady() {
   local ctrname
 
   ctrname="$1"
-  echo "- Waiting for container '${ctrname}' to become ready"
+  echo "- Waiting 180 s for container '${ctrname}' to become ready"
   # Wait 3 minutes for container to be running
   timeout=180
   x=""
   while [ ${timeout} -gt 0 -a "${x}" = "" ]; do
     x="$(docker ps --quiet --filter "name=${ctrname}" --filter "status=running")"
     sleep 1
-    x=$(expr ${timeout} - 1)
+    timeout=$(expr ${timeout} - 1)
   done
 
   if [ ${timeout} -le 0 ]; then
@@ -142,6 +143,3 @@ _main() {
 # ###############################
 _main "$@"
 # ###############################
-
-
-
