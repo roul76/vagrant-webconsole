@@ -9,6 +9,8 @@ Vagrant.configure(2) do |config|
     end
   end
 
-  config.vm.network "public_network", bridge: "en0: WLAN (AirPort)", mac: "080027000101"
+  # MacBook: export VAGRANT_BRIDGE_NETWORK_ADAPTER="en0: WLAN (AirPort)"
+  # others:  export VAGRANT_BRIDGE_NETWORK_ADAPTER="enp1s0"
+  config.vm.network "public_network", bridge: ENV['VAGRANT_BRIDGE_NETWORK_ADAPTER'], mac: "080027000101"
   config.vm.provision :shell, path: "init.sh", args: ENV['INIT_ARGS']
 end
