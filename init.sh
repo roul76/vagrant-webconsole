@@ -5,9 +5,9 @@ WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
 
 _checkParams() {
   echo "- Validate parameters"
-  if [ $# -ne 5 ]; then
+  if [ $# -ne 6 ]; then
     echo "FAILURE! Missing parameter">&2
-    echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password> <accessible networks>">&2
+    echo "- Usage: init.sh <webconsole-user> <webconsole-password> <ssh-user> <ssh-password> <accessible networks> <nameservers>">&2
     exit 1
   fi
 }
@@ -122,6 +122,7 @@ _startSSHDContainer() {
     -e SSH_USER="$1" \
     -e SSH_HASH="${pwh}" \
     -e SSH_ACCESSIBLE_NETWORKS="$3" \
+    -e SSH_NAMESERVERS="$4"
     -dt \
     roul76/sshd:latest >/dev/null 2>&1
 
@@ -134,7 +135,7 @@ _main() {
   _changeHostname
   _installNecessaryPackages
   _secureSSHD
-  _startSSHDContainer "$3" "$4" "$5"
+  _startSSHDContainer "$3" "$4" "$5" "$6"
   _startWebconsoleContainer "$1" "$2"
   _iptables
   echo "--- FINISHED ---"
