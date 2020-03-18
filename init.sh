@@ -122,7 +122,7 @@ _startSSHDContainer() {
     -e SSH_USER="$1" \
     -e SSH_HASH="${pwh}" \
     -e SSH_ACCESSIBLE_NETWORKS="$3" \
-    -e SSH_NAMESERVERS="$4"
+    -e SSH_NAMESERVERS="$4" \
     -dt \
     roul76/sshd:latest >/dev/null 2>&1
 
