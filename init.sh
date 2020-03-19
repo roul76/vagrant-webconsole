@@ -81,7 +81,7 @@ _startWebconsoleContainer() {
   local pwh
   local shell
 
-  pwh=$(openssl passwd -1 "$2" 2>/dev/null)
+  pwh="$(echo "$2"|base64 -d)"
   shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
   echo "- Starting webconsole wetty-container"
   echo "  user:  '$1'"
@@ -107,7 +107,7 @@ _startWebconsoleContainer() {
 _startSSHDContainer() {
   local pwh
 
-  pwh=$(openssl passwd -1 "$2" 2>/dev/null)
+  pwh="$(echo "$2"|base64 -d)"
   echo "- Starting webconsole sshd-container"
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
