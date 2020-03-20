@@ -2,6 +2,7 @@
 
 WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
+SSH_USER_ID=10001
 
 _checkParams() {
   echo "- Validate parameters"
@@ -107,13 +108,15 @@ _startWebconsoleContainer() {
 _createSSHKeys() {
   echo "- Create ssh keys"
   mkdir /sshkeys
-  chmod 755 /sshkeys
   ssh-keygen -q \
     -N "$(echo "$2"|base64 -d)" \
     -t rsa \
     -b 4096 \
     -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
     -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
+  chown -R "${SSH_USER_ID}" /sshkeys
+  chmod 500 /sshkeys
+  chmod 400 /sshkeys/*
 }
 
 _startSSHDContainer() {
@@ -132,6 +135,7 @@ _startSSHDContainer() {
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
     --mount type=bind,source=/sshkeys,target=/sshkeys \
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
+    -e SSH_USER_ID="${SSH_USER_ID}" \
     -e SSH_USER="$1" \
     -e SSH_HASH="${pwh}" \
     -e SSH_KEY_DIRECTORY="/sshkeys" \
