@@ -13,7 +13,7 @@ _checkParams() {
 }
 
 _changeHostname() {
-  echo "- Changing hostname to '${WEBCONSOLE_HOSTNAME}'"
+  echo "- Change hostname to '${WEBCONSOLE_HOSTNAME}'"
   echo "${WEBCONSOLE_HOSTNAME}" > /etc/hostname
   hostname -F /etc/hostname
   sed -i 's/alpine310/'"${WEBCONSOLE_HOSTNAME}"'/g' /etc/hosts
@@ -26,7 +26,7 @@ _installNecessaryPackages() {
 }
 
 _secureSSHD() {
-  echo "- Securing sshd"
+  echo "- Secure sshd"
   sed -i '
     s/^[#]*PermitRootLogin.*$/PermitRootLogin no/;
     s/^[#]*PasswordAuthentication.*$/PasswordAuthentication no/ ;
@@ -42,7 +42,7 @@ _iptables() {
   local netdevice
   local netmask
 
-  echo "- Configuring iptables"
+  echo "- Configure iptables"
   netdevice=$(route|awk '$1~/^default$/{print($8)}')
   netmask=$(ip route|awk '$3~/^'"${netdevice}"'$/{print($1)}')
   iptables -A INPUT -s "${netmask}" -j ACCEPT
@@ -61,7 +61,7 @@ _waitContainerReady() {
   local ctrname
 
   ctrname="$1"
-  echo "- Waiting 180 s for container '${ctrname}' to become ready"
+  echo "- Wait 180 s for container '${ctrname}' to become ready"
   # Wait 3 minutes for container to be running
   timeout=180
   x=""
@@ -83,7 +83,7 @@ _startWebconsoleContainer() {
 
   pwh="$(echo "$2"|base64 -d)"
   shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
-  echo "- Starting webconsole wetty-container"
+  echo "- Start webconsole wetty-container"
   echo "  user:  '$1'"
   echo "  hash:  '${pwh}'"
   echo "  shell: '${shell}'"
@@ -104,11 +104,23 @@ _startWebconsoleContainer() {
   _waitContainerReady "${WEBCONSOLE_HOSTNAME}"
 }
 
+_createSSHKeys() {
+  echo "- Create ssh keys"
+  mkdir /sshkeys
+  chmod 755 /sshkeys
+  ssh-keygen -q \
+    -N "$(echo "$2"|base64 -d)" \
+    -t rsa \
+    -b 4096 \
+    -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
+    -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
+}
+
 _startSSHDContainer() {
   local pwh
 
   pwh="$(echo "$2"|base64 -d)"
-  echo "- Starting webconsole sshd-container"
+  echo "- Start webconsole sshd-container"
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
   docker run \
@@ -118,12 +130,13 @@ _startSSHDContainer() {
     --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
+    --mount type=bind,source=/sshkeys,target=/sshkeys \
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
     -e SSH_USER="$1" \
     -e SSH_HASH="${pwh}" \
-    -e SSH_PASSPHRASE_BASE64="$3" \
-    -e SSH_ACCESSIBLE_NETWORKS="$4" \
-    -e SSH_NAMESERVERS="$5" \
+    -e SSH_KEY_DIRECTORY="/sshkeys" \
+    -e SSH_ACCESSIBLE_NETWORKS="$3" \
+    -e SSH_NAMESERVERS="$4" \
     -dt \
     roul76/sshd:latest >/dev/null 2>&1
 
@@ -136,7 +149,8 @@ _main() {
   _changeHostname
   _installNecessaryPackages
   _secureSSHD
-  _startSSHDContainer "$3" "$4" "$5" "$6" "$7"
+  _createSSHKeys "$3" "$5"
+  _startSSHDContainer "$3" "$4" "$6" "$7"
   _startWebconsoleContainer "$1" "$2"
   _iptables
   echo "--- FINISHED ---"
