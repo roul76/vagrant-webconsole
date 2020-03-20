@@ -67,7 +67,7 @@ _waitContainerReady() {
   timeout=180
   x=""
   while [ ${timeout} -gt 0 -a "${x}" = "" ]; do
-    x="$(docker ps --quiet --filter "name=${ctrname}" --filter "status=running")"
+    x="$(docker ps --quiet --filter "name=^/${ctrname}$" --filter "status=running")"
     sleep 1
     timeout=$(expr ${timeout} - 1)
   done
