@@ -114,9 +114,9 @@ _createSSHKeys() {
     -b 4096 \
     -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
     -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
-  chown -R "${SSH_USER_ID}" /sshkeys
-  chmod 500 /sshkeys
-  chmod 400 /sshkeys/*
+  chgrp -R "${SSH_USER_ID}" /sshkeys
+  chmod 550 /sshkeys
+  chmod 440 /sshkeys/*
 }
 
 _startSSHDContainer() {
