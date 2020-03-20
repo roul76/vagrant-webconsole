@@ -4,7 +4,7 @@ Vagrant.configure(2) do |config|
     webconsole.vm.box = "embedit/k8s"
 
     config.vm.provider "virtualbox" do |vbox|
-      vbox.memory = 512
+      vbox.memory = 640
       vbox.cpus = 1
     end
   end
