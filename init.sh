@@ -29,14 +29,17 @@ _installNecessaryPackages() {
 }
 
 _downloadImageDowloader() {
+  echo "- Download image downloader"
   wget https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh && \
   chmod 750 ./download-frozen-image-v2.sh
 }
 
 _downloadImage() {
+  echo "- Download image $1"
   local dir=$(mktemp -d)
   ./download-frozen-image-v2.sh "${dir}" "$1" && \
-  tar -cC "${dir}" . | docker load
+  tar -cC "${dir}" . | docker load && \
+  rm -rf "${dir}"
 }
 
 _secureSSHD() {
@@ -175,7 +178,6 @@ _main() {
   _secureSSHD
   _createSSHKeys "$3" "$5"
   _downloadImageDowloader
-  _downloadImage
   _startSSHDContainer "roul76/sshd:latest" "$3" "$4" "$6" "$7"
   _startWebconsoleContainer "roul76/wetty:latest" "$1" "$2"
   _iptables
