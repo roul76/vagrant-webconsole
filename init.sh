@@ -105,7 +105,7 @@ _startWebconsoleContainer() {
   echo "  hash:  '${pwh}'"
   echo "  shell: '${shell}'"
 
-  _downloadImage "${image_name}" 2>&1
+  _downloadImage "${image_name}" >/dev/null
   docker run \
     --restart always \
     --name "${WEBCONSOLE_HOSTNAME}" \
@@ -147,7 +147,7 @@ _startSSHDContainer() {
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
 
-  _downloadImage "${image_name}" 2>&1
+  _downloadImage "${image_name}" >/dev/null
 
   docker run \
     --restart always \
