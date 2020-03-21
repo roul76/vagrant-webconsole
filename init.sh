@@ -36,7 +36,7 @@ _downloadImageDowloader() {
 _downloadImage() {
   echo "- Download image $1"
   local dir=$(mktemp -d)
-  ./download-frozen-image-v2.sh "${dir}" "$1"
+  ./download-frozen-image-v2.sh "${dir}" "$1">/dev/null
   tar -cC "${dir}" . | docker load
   rm -rf "${dir}"
 }
@@ -105,7 +105,7 @@ _startWebconsoleContainer() {
   echo "  hash:  '${pwh}'"
   echo "  shell: '${shell}'"
 
-  _downloadImage "${image_name}" >/dev/null
+  _downloadImage "${image_name}"
   docker run \
     --restart always \
     --name "${WEBCONSOLE_HOSTNAME}" \
@@ -147,7 +147,7 @@ _startSSHDContainer() {
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
 
-  _downloadImage "${image_name}" >/dev/null
+  _downloadImage "${image_name}"
 
   docker run \
     --restart always \
