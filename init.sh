@@ -29,7 +29,7 @@ _installNecessaryPackages() {
 
 _downloadImageDowloader() {
   echo "- Download image downloader"
-  wget https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh
+  wget https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh
   chmod 750 ./download-frozen-image-v2.sh
 }
 
