@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -o pipefail
+
 WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
 SSH_USER_ID=10001
@@ -22,8 +24,19 @@ _changeHostname() {
 
 _installNecessaryPackages() {
   echo "- Install necessary packages"
-  apk add --no-cache jq \
+  apk add --no-cache jq go curl wget\
     >/dev/null
+}
+
+_downloadImageDowloader() {
+  wget https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh && \
+  chmod 750 ./download-frozen-image-v2.sh
+}
+
+_downloadImage() {
+  local dir=$(mktemp -d)
+  ./download-frozen-image-v2.sh "${dir}" "$1" && \
+  tar -cC "${dir}" . | docker load
 }
 
 _secureSSHD() {
@@ -79,15 +92,18 @@ _waitContainerReady() {
 }
 
 _startWebconsoleContainer() {
-  local pwh
-  local shell
+  local image_name="$1"
+  shift
 
-  pwh="$(echo "$2"|base64 -d)"
-  shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
+  local pwh="$(echo "$2"|base64 -d)"
+  local shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
+
   echo "- Start webconsole wetty-container"
   echo "  user:  '$1'"
   echo "  hash:  '${pwh}'"
   echo "  shell: '${shell}'"
+
+  _downloadImage "${image_name}" && \
   docker run \
     --restart always \
     --name "${WEBCONSOLE_HOSTNAME}" \
@@ -100,8 +116,7 @@ _startWebconsoleContainer() {
     -e WEBCONSOLE_HASH="${pwh}" \
     -e WEBCONSOLE_SHELL="${shell}" \
     -dt \
-    roul76/wetty:latest >/dev/null 2>&1
-
+    "${image_name}" >/dev/null 2>&1 && \
   _waitContainerReady "${WEBCONSOLE_HOSTNAME}"
 }
 
@@ -121,12 +136,16 @@ _createSSHKeys() {
 }
 
 _startSSHDContainer() {
-  local pwh
+  local image_name="$1"
+  shift
 
-  pwh="$(echo "$2"|base64 -d)"
+  local pwh="$(echo "$2"|base64 -d)"
+
   echo "- Start webconsole sshd-container"
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
+
+  _downloadImage "${image_name}" && \
   docker run \
     --restart always \
     --name "${WEBCONSOLE_SSHD_HOSTNAME}" \
@@ -144,8 +163,7 @@ _startSSHDContainer() {
     -e SSH_ACCESSIBLE_NETWORKS="$3" \
     -e SSH_NAMESERVERS="$4" \
     -dt \
-    roul76/sshd:latest >/dev/null 2>&1
-
+    "${image_name}" >/dev/null 2>&1 && \
   _waitContainerReady "${WEBCONSOLE_SSHD_HOSTNAME}"
 }
 
@@ -156,8 +174,10 @@ _main() {
   _installNecessaryPackages
   _secureSSHD
   _createSSHKeys "$3" "$5"
-  _startSSHDContainer "$3" "$4" "$6" "$7"
-  _startWebconsoleContainer "$1" "$2"
+  _downloadImageDowloader
+  _downloadImage
+  _startSSHDContainer "roul76/sshd:latest" "$3" "$4" "$6" "$7"
+  _startWebconsoleContainer "roul76/wetty:latest" "$1" "$2"
   _iptables
   echo "--- FINISHED ---"
 }
