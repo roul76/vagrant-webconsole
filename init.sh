@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -o pipefail
+set -eo pipefail
 
 WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
@@ -24,21 +24,20 @@ _changeHostname() {
 
 _installNecessaryPackages() {
   echo "- Install necessary packages"
-  apk add --no-cache jq go curl wget\
-    >/dev/null
+  apk add --no-cache jq go curl wget
 }
 
 _downloadImageDowloader() {
   echo "- Download image downloader"
-  wget https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh && \
+  wget https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh
   chmod 750 ./download-frozen-image-v2.sh
 }
 
 _downloadImage() {
   echo "- Download image $1"
   local dir=$(mktemp -d)
-  ./download-frozen-image-v2.sh "${dir}" "$1" && \
-  tar -cC "${dir}" . | docker load && \
+  ./download-frozen-image-v2.sh "${dir}" "$1"
+  tar -cC "${dir}" . | docker load
   rm -rf "${dir}"
 }
 
@@ -52,7 +51,7 @@ _secureSSHD() {
     s/^[#]*PubkeyAuthentication.*/PubkeyAuthentication yes/
   ' /etc/ssh/sshd_config
 
-  /etc/init.d/sshd restart >/dev/null
+  /etc/init.d/sshd restart
 }
 
 _iptables() {
@@ -106,7 +105,7 @@ _startWebconsoleContainer() {
   echo "  hash:  '${pwh}'"
   echo "  shell: '${shell}'"
 
-  _downloadImage "${image_name}" && \
+  _downloadImage "${image_name}"
   docker run \
     --restart always \
     --name "${WEBCONSOLE_HOSTNAME}" \
@@ -119,7 +118,7 @@ _startWebconsoleContainer() {
     -e WEBCONSOLE_HASH="${pwh}" \
     -e WEBCONSOLE_SHELL="${shell}" \
     -dt \
-    "${image_name}" >/dev/null 2>&1 && \
+    "${image_name}"
   _waitContainerReady "${WEBCONSOLE_HOSTNAME}"
 }
 
@@ -148,7 +147,8 @@ _startSSHDContainer() {
   echo "  user: '$1'"
   echo "  hash: '${pwh}'"
 
-  _downloadImage "${image_name}" && \
+  _downloadImage "${image_name}"
+
   docker run \
     --restart always \
     --name "${WEBCONSOLE_SSHD_HOSTNAME}" \
@@ -166,12 +166,14 @@ _startSSHDContainer() {
     -e SSH_ACCESSIBLE_NETWORKS="$3" \
     -e SSH_NAMESERVERS="$4" \
     -dt \
-    "${image_name}" >/dev/null 2>&1 && \
+    "${image_name}"
+
   _waitContainerReady "${WEBCONSOLE_SSHD_HOSTNAME}"
 }
 
 _main() {
-  echo "--- INITIALIZATION  ---"
+  echo "--- INITIALIZATION ---"
+
   _checkParams "$@"
   _changeHostname
   _installNecessaryPackages
@@ -181,6 +183,7 @@ _main() {
   _startSSHDContainer "roul76/sshd:latest" "$3" "$4" "$6" "$7"
   _startWebconsoleContainer "roul76/wetty:latest" "$1" "$2"
   _iptables
+
   echo "--- FINISHED ---"
 }
 
