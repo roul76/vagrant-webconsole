@@ -107,16 +107,17 @@ _startWebconsoleContainer() {
 
 _createSSHKeys() {
   echo "- Create ssh keys"
-  mkdir /sshkeys
+  mkdir /sshkeys /sshkeys.pub
   ssh-keygen -q \
     -N "$(echo "$2"|base64 -d)" \
     -t rsa \
     -b 4096 \
     -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
     -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
-  chgrp -R "${SSH_USER_ID}" /sshkeys
-  chmod 550 /sshkeys
-  chmod 440 /sshkeys/*
+  mv /sshkeys/*.pub /sshkeys.pub/
+  chgrp -R "${SSH_USER_ID}" /sshkeys /sshkeys.pub
+  chmod 550 /sshkeys /sshkeys.pub
+  chmod 440 /sshkeys/* /sshkeys.pub/*
 }
 
 _startSSHDContainer() {
@@ -133,7 +134,8 @@ _startSSHDContainer() {
     --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
-    --mount type=bind,source=/sshkeys,target=/sshkeys \
+    --mount type=bind,source=/sshkeys,target=/sshkeys,readonly \
+    --mount type=bind,source=/sshkeys.pub,target=/sshkeys.pub,readonly \
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
     -e SSH_USER_ID="${SSH_USER_ID}" \
     -e SSH_USER="$1" \
