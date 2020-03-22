@@ -8,7 +8,7 @@ localdir="/vagrant/include"
 
 _checkParams() {
   echo "- Validate parameters"
-  if [ $# -ne 8 ]; then
+  if [ $# -ne 3 ]; then
     echo "FAILURE! Missing parameter">&2
     echo "- Usage: $0 <hostname> <ssh-user> <ssh-passphrase-b64>">&2
     exit 1
