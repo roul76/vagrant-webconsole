@@ -2,11 +2,11 @@
 
 set -eo pipefail
 
-localdir=$(cd "$(dirname $0)"; pwd)
-# shellcheck source=./_global-vars.sh
+localdir="/vagrant/include"
+# shellcheck source=include/_global-vars.sh
 . "${localdir}/_global-vars.sh"
 
-# shellcheck source=./_include.sh
+# shellcheck source=include/_include.sh
 . "${localdir}/_include.sh"
 
 _checkParams() {
