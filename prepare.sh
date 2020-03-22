@@ -59,9 +59,11 @@ _createSSHKeys() {
     -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
     -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
   mv /sshkeys/*.pub /sshkeys.pub/
-  chgrp -R "${SSH_USER_ID}" /sshkeys /sshkeys.pub
-  chmod 550 /sshkeys /sshkeys.pub
-  chmod 440 /sshkeys/* /sshkeys.pub/*
+  chown -R "${SSH_USER_ID}:${SSH_USER_ID}" /sshkeys /sshkeys.pub
+  chmod 500 /sshkeys
+  chmod 550 /sshkeys.pub
+  chmod 400 /sshkeys/*
+  chmod 440 /sshkeys.pub/*
 }
 
 
