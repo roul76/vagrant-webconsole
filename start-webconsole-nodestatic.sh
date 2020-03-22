@@ -28,10 +28,10 @@ _startNodeStaticContainer() {
     --restart always \
     --name "${WEBCONSOLE_NODESTATIC_HOSTNAME}" \
     --network host \
-    --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_NODESTATIC_HOSTNAME}" \
     --mount type=bind,source=/sshkeys.pub,target=/sshkeys.pub,readonly \
     -e NODE_STATIC_DIR=/sshkeys.pub \
+    -e NODE_STATIC_PORT="${WEBCONSOLE_NODESTATIC_PORT}" \
     -dt \
     "${image_name}"
   _waitContainerReady "${WEBCONSOLE_NODESTATIC_HOSTNAME}"

@@ -32,7 +32,6 @@ _startSSHDContainer() {
     --restart always \
     --name "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --network bridge \
-    --cap-add=NET_ADMIN \
     --hostname "${WEBCONSOLE_SSHD_HOSTNAME}" \
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
     --mount type=bind,source=/sshkeys,target=/sshkeys,readonly \
