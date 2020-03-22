@@ -1,25 +1,33 @@
-#!/bin/sh
+#!/bin/ash
 
 set -eo pipefail
 
 WEBCONSOLE_HOSTNAME="webconsole"
 WEBCONSOLE_SSHD_HOSTNAME="webconsole-sshd"
+WEBCONSOLE_NODESTATIC_HOSTNAME="webconsole-nodestatic"
 SSH_USER_ID=10001
 
 _checkParams() {
   echo "- Validate parameters"
-  if [ $# -ne 7 ]; then
+  if [ $# -ne 8 ]; then
     echo "FAILURE! Missing parameter">&2
-    echo "- Usage: init.sh <webconsole-user> <webconsole-password-hash-b64> <ssh-user> <ssh-password-hash-b64> <ssh-passphrase-b64> <accessible networks> <nameservers>">&2
+    echo "- Usage: $0 \ ">&2
+    echo "           <hostname> \ ">&2
+    echo "           <webconsole-user> \ ">&2
+    echo "           <webconsole-password-hash-b64> \ ">&2
+    echo "           <ssh-user> <ssh-password-hash-b64> \ ">&2
+    echo "           <ssh-passphrase-b64> \ ">&2
+    echo "           <accessible networks> \ ">&2
+    echo "           <nameservers>">&2
     exit 1
   fi
 }
 
 _changeHostname() {
-  echo "- Change hostname to '${WEBCONSOLE_HOSTNAME}'"
-  echo "${WEBCONSOLE_HOSTNAME}" > /etc/hostname
+  echo "- Change hostname to '$1'"
+  echo "$1" > /etc/hostname
   hostname -F /etc/hostname
-  sed -i 's/alpine310/'"${WEBCONSOLE_HOSTNAME}"'/g' /etc/hosts
+  sed -i 's/alpine310/'"$1"'/g' /etc/hosts
 }
 
 _installNecessaryPackages() {
@@ -28,6 +36,9 @@ _installNecessaryPackages() {
 }
 
 _downloadImageDowloader() {
+  # Refer to
+  # - https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh
+  # - https://dev.to/tomsfernandez/download-docker-images-without-docker-pull-17e6
   echo "- Download image downloader"
   wget https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh
   chmod 750 ./download-frozen-image-v2.sh
@@ -35,7 +46,7 @@ _downloadImageDowloader() {
 
 _downloadImage() {
   echo "- Download image $1"
-  local dir=$(mktemp -d)
+  local dir; dir=$(mktemp -d)
   ./download-frozen-image-v2.sh "${dir}" "$1">/dev/null
   tar -cC "${dir}" . | docker load
   rm -rf "${dir}"
@@ -54,7 +65,7 @@ _secureSSHD() {
   /etc/init.d/sshd restart
 }
 
-_iptables() {
+_changeIPTables() {
   local netdevice
   local netmask
 
@@ -94,11 +105,9 @@ _waitContainerReady() {
 }
 
 _startWebconsoleContainer() {
-  local image_name="$1"
-  shift
-
-  local pwh="$(echo "$2"|base64 -d)"
+  local image_name="roul76/wetty:latest"
   local shell="/webconsole/${WEBCONSOLE_SSHD_HOSTNAME}.sh"
+  local pwh; pwh="$(echo "$2"|base64 -d)"
 
   echo "- Start webconsole wetty-container"
   echo "  user:  '$1'"
@@ -138,10 +147,8 @@ _createSSHKeys() {
 }
 
 _startSSHDContainer() {
-  local image_name="$1"
-  shift
-
-  local pwh="$(echo "$2"|base64 -d)"
+  local image_name="roul76/sshd:latest"
+  local pwh; pwh="$(echo "$2"|base64 -d)"
 
   echo "- Start webconsole sshd-container"
   echo "  user: '$1'"
@@ -171,18 +178,47 @@ _startSSHDContainer() {
   _waitContainerReady "${WEBCONSOLE_SSHD_HOSTNAME}"
 }
 
+_startNodeStaticContainer() {
+  local image_name="roul76/node-static:latest"
+
+  echo "- Start webconsole node-static-container"
+
+  _downloadImage "${image_name}"
+  docker run \
+    --restart always \
+    --name "${WEBCONSOLE_NODESTATIC_HOSTNAME}" \
+    --network host \
+    --cap-add=NET_ADMIN \
+    --hostname "${WEBCONSOLE_NODESTATIC_HOSTNAME}" \
+    --mount type=bind,source=/sshkeys.pub,target=/sshkeys.pub,readonly \
+    -e NODE_STATIC_DIR=/sshkeys.pub \
+    -dt \
+    "${image_name}"
+  _waitContainerReady "${WEBCONSOLE_NODESTATIC_HOSTNAME}"
+}
+
 _main() {
+  local hostname="$1"
+  local wetty_user="$2"
+  local wetty_hashed_password_base64="$3"
+  local sshd_user="$4"
+  local sshd_hashed_password_base64="$5"
+  local sshd_key_passphrase_base64="$6"
+  local accessible_subnets="$7"
+  local additional_nameservers="$8"
+
   echo "--- INITIALIZATION ---"
 
   _checkParams "$@"
-  _changeHostname
+  _changeHostname "${hostname}"
   _installNecessaryPackages
   _secureSSHD
-  _createSSHKeys "$3" "$5"
+  _createSSHKeys "${sshd_user}" "${sshd_key_passphrase_base64}"
   _downloadImageDowloader
-  _startSSHDContainer "roul76/sshd:latest" "$3" "$4" "$6" "$7"
-  _startWebconsoleContainer "roul76/wetty:latest" "$1" "$2"
-  _iptables
+  _startSSHDContainer "${sshd_user}" "${sshd_hashed_password_base64}" "${accessible_subnets}" "${additional_nameservers}"
+  _startNodeStaticContainer
+  _startWebconsoleContainer "${wetty_user}" "${wetty_hashed_password_base64}"
+  _changeIPTables
 
   echo "--- FINISHED ---"
 }
