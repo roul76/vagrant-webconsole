@@ -13,13 +13,14 @@ _waitContainerReady() {
 
   echo "- Wait 180 s for container '${ctrname}' to become ready"
   # Wait 3 minutes for container to be running
-  while [ ${timeout} -gt 0 -a "${x}" = "" ]; do
+  while [ ${timeout} -gt 0 ] && \
+        [ "${x}" = "" ]; do
     x="$(docker ps --quiet --filter "name=^/${ctrname}$" --filter "status=running")"
     sleep 1
-    timeout=$(expr ${timeout} - 1)
+    timeout=$(( timeout - 1 ))
   done
 
-  if [ ${timeout} -le 0 ]; then
+  if [ "${timeout}" -le 0 ]; then
     echo "Container '${ctrname}' did not come up within 3 minutes.">&2
     exit 1
   fi

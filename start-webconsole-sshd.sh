@@ -36,6 +36,7 @@ _startSSHDContainer() {
     --mount type=bind,source=/vagrant/shared,target=/webconsole \
     --mount type=bind,source=/sshkeys,target=/sshkeys,readonly \
     --mount type=bind,source=/sshkeys.pub,target=/sshkeys.pub,readonly \
+    --cap-add=NET_ADMIN \
     -e SSH_SUBNET="$(_retrieveBridgeSubnet)" \
     -e SSH_USER_ID="${SSH_USER_ID}" \
     -e SSH_USER="$1" \

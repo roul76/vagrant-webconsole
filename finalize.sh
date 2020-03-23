@@ -32,7 +32,6 @@ _changeIPTables() {
   iptables -N SYN_FLOOD
   iptables -A SYN_FLOOD -m limit --limit 5/s --limit-burst 10 -j RETURN
   iptables -A SYN_FLOOD -j DROP
-  iptables -A INPUT -p tcp --syn -j SYN_FLOOD
 
 # Allow traffic once a connection has been made
   iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -41,6 +40,7 @@ _changeIPTables() {
   iptables -A INPUT -p tcp --dport "${WEBCONSOLE_WETTY_PORT}" -j ACCEPT
   iptables -A INPUT -p tcp --dport "${WEBCONSOLE_NODESTATIC_PORT}" -j ACCEPT
 
+  iptables -A INPUT -p tcp --syn -j SYN_FLOOD
   iptables -A INPUT -s "${netmask}" -j ACCEPT
   iptables -P INPUT DROP
 
