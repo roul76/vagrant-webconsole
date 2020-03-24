@@ -1,7 +1,12 @@
 _downloadImage() {
   echo "- Download image $1"
   local dir; dir=$(mktemp -d)
-  ./download-frozen-image-v2.sh "${dir}" "$1">/dev/null
+  set +e
+  if ! x=$(./download-frozen-image-v2.sh "${dir}" "$1" 2>&1); then
+    echo "$x">&2
+    exit 1
+  fi
+  set -e
   tar -cC "${dir}" . | docker load
   rm -rf "${dir}"
 }

@@ -32,7 +32,12 @@ _downloadImageDowloader() {
   # - https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh
   # - https://dev.to/tomsfernandez/download-docker-images-without-docker-pull-17e6
   echo "- Download image downloader"
-  wget https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh
+  set +e
+  if ! x=$(wget https://raw.githubusercontent.com/moby/moby/master/contrib/download-frozen-image-v2.sh 2>&1); then
+    echo "$x">&2
+    exit 1
+  fi
+  set -e
   chmod 750 ./download-frozen-image-v2.sh
 }
 

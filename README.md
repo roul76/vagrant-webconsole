@@ -1,7 +1,15 @@
 # vagrant-webconsole
 Vagrant setup for running a Docker container containing wetty (https://hub.docker.com/repository/docker/roul76/wetty)
 
-Startup:
+##Startup
+Before startup make sure to export your desired bridged network adapter:
+```
+export VAGRANT_BRIDGE_NETWORK_ADAPTER="enp1s0"
+```
+If the network adapter is not available you will be asked to pick the right one during startup.
+
+The box itself can be started in two ways.
+Either full provisioning:
 ```
 export INIT_ARGS_PREPARATION="<vm hostname> <webconsole-user> <ssh-key-passphrase-base64>"
 export INIT_ARGS_WEBCONSOLE_SSHD="<ssh-user> <password-hash-base64> <allowed networks> <additional nameservers>"
@@ -10,7 +18,7 @@ export INIT_ARGS_WEBCONSOLE_NODESTATIC=""
 export INIT_ARGS_FINALIZATION="" 
 vagrant up
 ```
-or
+or step-by-step-provisioning:
 ```
 vagrant up --no-provision
 
