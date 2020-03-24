@@ -8,9 +8,9 @@ localdir="/vagrant/include"
 
 _checkParams() {
   echo "- Validate parameters"
-  if [ $# -ne 3 ]; then
+  if [ $# -ne 2 ]; then
     echo "FAILURE! Missing parameter">&2
-    echo "- Usage: $0 <hostname> <ssh-user> <ssh-passphrase-b64>">&2
+    echo "- Usage: $0 <hostname> <ssh-passphrase-b64>">&2
     exit 1
   fi
 }
@@ -53,11 +53,11 @@ _createSSHKeys() {
   echo "- Create ssh keys"
   mkdir /sshkeys /sshkeys.pub
   ssh-keygen -q \
-    -N "$(echo "$2"|base64 -d)" \
+    -N "$(echo "$1"|base64 -d)" \
     -t rsa \
     -b 4096 \
-    -C "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}" \
-    -f "/sshkeys/$1@${WEBCONSOLE_SSHD_HOSTNAME}.key"
+    -C "${WEBCONSOLE_SSHD_HOSTNAME}" \
+    -f "/sshkeys/${WEBCONSOLE_SSHD_HOSTNAME}.key"
   mv /sshkeys/*.pub /sshkeys.pub/
   chown -R "${SSH_USER_ID}:${SSH_USER_ID}" /sshkeys /sshkeys.pub
   chmod 500 /sshkeys
@@ -69,8 +69,7 @@ _createSSHKeys() {
 
 _main() {
   local hostname="$1"
-  local sshd_user="$2"
-  local sshd_key_passphrase_base64="$3"
+  local sshd_key_passphrase_base64="$2"
 
   echo "--- PREPARATION ---"
 
@@ -78,7 +77,7 @@ _main() {
   _changeHostname "${hostname}"
   _installNecessaryPackages
   _secureSSHD
-  _createSSHKeys "${sshd_user}" "${sshd_key_passphrase_base64}"
+  _createSSHKeys "${sshd_key_passphrase_base64}"
   _downloadImageDowloader
 
   echo "--- FINISHED ---"

@@ -15,27 +15,27 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "preparation", type: "shell" do |shell|
     shell.path = "prepare.sh"
-    shell.args = ENV['INIT_ARGS']
+    shell.args = ENV['INIT_ARGS_PREPARATION']
   end
 
   config.vm.provision "start-webconsole-sshd", type: "shell" do |shell|
     shell.path = "start-webconsole-sshd.sh"
-    shell.args = ENV['INIT_ARGS']
+    shell.args = ENV['INIT_ARGS_WEBCONSOLE_SSHD']
   end
 
   config.vm.provision "start-webconsole-nodestatic", type: "shell" do |shell|
     shell.path = "start-webconsole-nodestatic.sh"
-    shell.args = ENV['INIT_ARGS']
+    shell.args = ENV['INIT_ARGS_WEBCONSOLE_NODESTATIC']
   end
 
   config.vm.provision "start-webconsole-wetty", type: "shell" do |shell|
     shell.path = "start-webconsole-wetty.sh"
-    shell.args = ENV['INIT_ARGS']
+    shell.args = ENV['INIT_ARGS_WEBCONSOLE_WETTY']
   end
 
   config.vm.provision "finalization", type: "shell" do |shell|
     shell.path = "finalize.sh"
-    shell.args = ENV['INIT_ARGS']
+    shell.args = ENV['INIT_ARGS_FINALIZATION']
   end
 
 end
