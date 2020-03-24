@@ -37,8 +37,8 @@ _changeIPTables() {
   iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 # Limit incoming traffic to port 3000 and 3001
-  iptables -A INPUT -p tcp --dport "${WEBCONSOLE_WETTY_PORT}" -j ACCEPT
-  iptables -A INPUT -p tcp --dport "${WEBCONSOLE_NODESTATIC_PORT}" -j ACCEPT
+  iptables -A INPUT -m tcp -p tcp --dport "${WEBCONSOLE_WETTY_PORT}" -m state --state NEW -j ACCEPT
+  iptables -A INPUT -m tcp -p tcp --dport "${WEBCONSOLE_NODESTATIC_PORT}" -m state --state NEW -j ACCEPT
 
   iptables -A INPUT -p tcp --syn -j SYN_FLOOD
   iptables -A INPUT -s "${netmask}" -j ACCEPT
@@ -53,7 +53,6 @@ _changeIPTables() {
 # Drop everything else
   iptables -P OUTPUT DROP
 }
-
 _main() {
   echo "--- FINALIZATION ---"
 

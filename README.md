@@ -1,7 +1,9 @@
-# vagrant-webconsole
+vagrant-webconsole
+==================
 Vagrant setup for running a Docker container containing wetty (https://hub.docker.com/repository/docker/roul76/wetty)
 
-##Startup
+Startup
+-------
 Before startup make sure to export your desired bridged network adapter:
 ```
 export VAGRANT_BRIDGE_NETWORK_ADAPTER="enp1s0"
@@ -16,11 +18,11 @@ export INIT_ARGS_WEBCONSOLE_SSHD="<ssh-user> <password-hash-base64> <allowed net
 export INIT_ARGS_WEBCONSOLE_WETTY="<webconsole-user> <password-hash-base64>"
 export INIT_ARGS_WEBCONSOLE_NODESTATIC=""
 export INIT_ARGS_FINALIZATION="" 
-vagrant up
+vagrant up --provider="virtualbox"
 ```
 or step-by-step-provisioning:
 ```
-vagrant up --no-provision
+vagrant up --no-provision --provider="virtualbox"
 
 INIT_ARGS_PREPARATION="<vm hostname> <webconsole-user> <ssh-key-passphrase-base64>" vagrant provision --provision-with peparation
 INIT_ARGS_WEBCONSOLE_SSHD="<ssh-user> <password-hash-base64> <allowed networks> <additional nameservers>" vagrant provision --provision-with start-webconsole-sshd  
@@ -32,7 +34,7 @@ INIT_ARGS_FINALIZATION="" vagrant provision --provision-with finalization
 Example:
 ```
 export INIT_ARGS_PREPARATION="mywebconsolehost '$(echo "55HPassphrase"|base64)'"
-export INIT_ARGS_WEBCONSOLE_SSHD="lisa '$(openssl passwd -1 "LisaDO3%"|base64)' '10.0.1.0/24|10.0.2.0/24' '10.0.1.1|10.0.2.1'"
+export INIT_ARGS_WEBCONSOLE_SSHD="lisa '$(openssl passwd -1 "LisaDO3%"|base64)' '0.0.0.0/0' '1.1.1.1|1.0.0.1|8.8.8.8|8.8.4.4'"
 export INIT_ARGS_WEBCONSOLE_WETTY="john '$(openssl passwd -1 "JohnDO3%"|base64)'"
 export INIT_ARGS_WEBCONSOLE_NODESTATIC=""
 export INIT_ARGS_FINALIZATION="" 
